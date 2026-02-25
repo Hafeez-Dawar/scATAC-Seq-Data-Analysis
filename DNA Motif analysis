@@ -1,0 +1,67 @@
+library(Signac)
+library(Seurat)
+library(JASPAR2020)
+library(TFBSTools)
+library(BSgenome.Mmusculus.UCSC.mm10)
+library(patchwork)    
+library(BSgenome.Mmusculus.UCSC.mm10)
+library(EnsDb.Mmusculus.v79)
+library(ggseqlogo) 
+
+# Download each file of adult mouse brain
+download.file(
+  url = "http://cf.10xgenomics.com/samples/cell-atac/1.1.0/atac_v1_adult_brain_fresh_5k/atac_v1_adult_brain_fresh_5k_filtered_peak_bc_matrix.h5",
+  destfile = "atac_v1_adult_brain_fresh_5k_filtered_peak_bc_matrix.h5",
+  mode = "wb"  # Important for binary files
+)
+
+download.file(
+  url = "http://cf.10xgenomics.com/samples/cell-atac/1.1.0/atac_v1_adult_brain_fresh_5k/atac_v1_adult_brain_fresh_5k_singlecell.csv",
+  destfile = "atac_v1_adult_brain_fresh_5k_singlecell.csv",
+  mode = "wb"
+)
+
+
+download.file(
+  url = "http://cf.10xgenomics.com/samples/cell-atac/1.1.0/atac_v1_adult_brain_fresh_5k/atac_v1_adult_brain_fresh_5k_fragments.tsv.gz",
+  destfile = "atac_v1_adult_brain_fresh_5k_fragments.tsv.gz",
+  mode = "wb"
+)
+
+download.file(
+  url = "http://cf.10xgenomics.com/samples/cell-atac/1.1.0/atac_v1_adult_brain_fresh_5k/atac_v1_adult_brain_fresh_5k_fragments.tsv.gz.tbi",
+  destfile = "atac_v1_adult_brain_fresh_5k_fragments.tsv.gz.tbi",
+  mode = "wb"
+)
+
+
+
+rm(list=ls())
+gc()
+
+# load the seurat object
+mouse <- readRDS("mouse.rds") 
+list.files()
+
+# create a dimplot
+DimPlot(mouse, label = TRUE, pt.size = 0.1) + NoLegend()
+
+# Download a list of DNA motifs from the JASPAR
+pfm <- getMatrixSet(x = JASPAR2020, opts = list(collection = "CORE", tax_group = "vertebrates", all_versions = FALSE))
+
+#Add DNA motif info into the seurat object
+mouse <- AddMotifs(mouse, genome = BSgenome.Mmusculus.UCSC.mm10, pfm = pfm) 
+
+#identify the differential peaks between groups/cell types
+da_peaks <- FindMarkers(mouse, ident.1 = "Pvalb", ident.2 = "Sst", only.pos = TRUE, test.use ="LR", min.pct = 0.05, 
+latent.vars = "nCount_peaks") 
+
+#identify the significantly top peaks
+top.da.peak <- rownames(da_peaks[da_peaks$p_val < 0.005 & da_peaks$pct.1 > 0.2, ])
+1
+
+#Find enriched motif
+enriched.motif <- FindMotifs(mouse, features = top.da.peak)
+
+#plot the enriched motif
+MotifPlot(mouse, motifs = head(rownames(enriched.motif)))
