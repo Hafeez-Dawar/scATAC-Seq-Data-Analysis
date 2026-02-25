@@ -1,0 +1,13 @@
+# add gene annotation 
+pbmc@assays$peaks@annotation
+
+# extract gene information
+annotation <- GetGRangesFromEnsDb(ensdb = EnsDb.Hsapiens.v86)
+
+# change to UCSC style since the data was mapped to hg19
+seqlevelsStyle(annotation) <- 'UCSC'
+
+# Add gene annotation into the seurat object
+Annotation(pbmc) <- annotation
+
+pbmc@assays$peaks@annotation
