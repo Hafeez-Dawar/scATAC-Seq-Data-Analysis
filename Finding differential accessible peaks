@@ -1,0 +1,35 @@
+#change the cell identity from clusters to predicted labels
+Idents(pbmc) <- pbmc$predicted.id 
+
+DefaultAssay(pbmc)
+DefaultAssay(pbmc) <- "peaks" 
+DefaultAssay(pbmc) 
+
+# Differential expression of peaks
+da_peaks <- FindMarkers(pbmc, ident.1 = "CD4 Naive",
+ident.2 = "CD14+ Monocytes", test.use = "wilcox", min.pct = 0.1) 
+head(da_peaks) 
+
+
+
+
+# Visualizing top differentially expressed peaks
+plot1 <- VlnPlot(object = pbmc,
+                 features = rownames(da_peaks)[1],
+                 pt.size = 0.1,
+                 idents = c('CD4 Naive','CD14+ Monocytes'))
+
+plot2 <- FeaturePlot(object = pbmc,
+                     features = rownames(da_peaks)[1],
+                     pt.size = 0.1)
+
+plot1 | plot2 0
+
+
+open_cd4naive <- rownames(da_peaks[da_peaks$avg_log2FC > 3, ])
+open_cd14mono <- rownames(da_peaks[da_peaks$avg_log2FC < -3, ])
+
+closest_genes_cd4naive <- ClosestFeature(pbmc, regions = open_cd4naive)
+closest_genes_cd14mono <- ClosestFeature(pbmc, regions = open_cd14mono) 
+head(closest_genes_cd4naive)
+head(closest_genes_cd14mono)
