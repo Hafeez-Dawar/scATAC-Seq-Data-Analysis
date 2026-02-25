@@ -51,3 +51,27 @@ wget https://cf.10xgenomics.com/samples/cell-atac/2.1.0/10k_pbmc_ATACv2_nextgem_
 wget https://cf.10xgenomics.com/samples/cell-atac/2.1.0/10k_pbmc_ATACv2_nextgem_Chromium_Controller/10k_pbmc_ATACv2_nextgem_Chromium_Controller_fragments.tsv.gz
 
 wget https://cf.10xgenomics.com/samples/cell-atac/2.1.0/10k_pbmc_ATACv2_nextgem_Chromium_Controller/10k_pbmc_ATACv2_nextgem_Chromium_Controller_fragments.tsv.gz.tbi
+
+
+
+#or you can download it into your local machine by using the download.file() function in R
+# 1. Filtered peak-barcode matrix (HDF5)
+download.file(
+  url = "https://cf.10xgenomics.com/samples/cell-atac/2.1.0/10k_pbmc_ATACv2_nextgem_Chromium_Controller/10k_pbmc_ATACv2_nextgem_Chromium_Controller_filtered_peak_bc_matrix.h5",
+  destfile = "10k_pbmc_ATACv2/filtered_peak_bc_matrix.h5",
+  mode = "wb"
+)
+
+# 2. Single-cell metadata CSV
+download.file(
+  url = "https://cf.10xgenomics.com/samples/cell-atac/2.1.0/10k_pbmc_ATACv2_nextgem_Chromium_Controller/10k_pbmc_ATACv2_nextgem_Chromium_Controller_singlecell.csv",
+  destfile = "10k_pbmc_ATACv2/singlecell.csv",
+  mode = "wb"
+)
+
+# 3. Fragments file
+download.file(
+  url = "https://cf.10xgenomics.com/samples/cell-atac/2.1.0/10k_pbmc_ATACv2_nextgem_Chromium_Controller/10k_pbmc_ATACv2_nextgem_Chromium_Controller_fragments.tsv.gz",
+  destfile = "10k_pbmc_ATACv2/fragments.tsv.gz",
+  mode = "wb"
+)
