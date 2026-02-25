@@ -1,0 +1,60 @@
+#R Version (R version 4.4.3)
+library(Signac) # version 1.16.0
+library(Seurat) # 5.4.0
+library(GenomicRanges) # 1.56.2
+library(ggplot2) # 4.0.1
+library(patchwork) # 1.3.2
+library(hdf5r)
+library(biovizBase)            
+library(EnsDb.Hsapiens.v86)
+
+#Load the seurat object
+pbmc <- readRDS("pbmc.rds") 
+
+# Load the seurat object from pre-processed scRNA-Seq data
+pbmc_rna <- readRDS("pbmc_10k_v3.rds") 
+
+#Update the seurat object
+pbmc_rna <- UpdateSeuratObject(pbmc_rna)
+
+#Dimplot
+DimPlot(pbmc_rna, label = TRUE, repel = TRUE) + ggtitle('scRNA-Seq seurat') + NoLegend()
+
+#identify anchors between scATAC-Seq data and scRNA-Seq
+transfer.anchors <- FindTransferAnchors(
+  reference = pbmc_rna,
+  query = pbmc,
+  reduction = 'cca'
+)  
+
+# Transfer cell type labels from reference scRNA-Seq data to query scATAC-Seq data
+predicted.labels <- TransferData(
+  anchorset = transfer.anchors,
+  refdata = pbmc_rna$celltype,
+  weight.reduction = pbmc[['lsi']],
+  dims = 2:30
+)
+
+View(pbmc@meta.data) 
+
+# Add predicted labels to the metadata of scATAC-Seq seurat object (pbmc)
+pbmc <- AddMetaData(pbmc, metadata = predicted.labels) 
+
+# create a DimPlot
+plot1 <- DimPlot(
+  object = pbmc_rna,
+  group.by = 'celltype',
+  label = TRUE,
+  repel = TRUE) + NoLegend() + ggtitle('scRNA-seq')
+
+plot2 <- DimPlot(
+  object = pbmc,
+  group.by = 'predicted.id',
+  label = TRUE,
+  repel = TRUE) + NoLegend() + ggtitle('scATAC-seq')
+
+
+plot1 + plot2 
+
+#change the cell identity from clusters to predicted labels
+Idents(pbmc) <- pbmc$predicted.id 
