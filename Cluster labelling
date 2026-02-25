@@ -1,0 +1,45 @@
+#R Version (R version 4.4.3)
+library(Signac) # version 1.16.0
+library(Seurat) # 5.4.0
+library(GenomicRanges) # 1.56.2
+library(ggplot2) # 4.0.1
+library(patchwork) # 1.3.2
+library(hdf5r)
+library(biovizBase)            
+library(EnsDb.Hsapiens.v86)
+
+
+
+# Load the seurat object
+pbmc <-readRDS("pbmc.rds")
+
+# create an activity matrix for gene
+gene.activities <- GeneActivity(pbmc)
+
+# create a seurat assay
+predicted_RNA <-CreateAssayObject(counts = gene.activities)
+
+# Add predicted_RNA assay to the seurat object
+pbmc[['RNA']] <- predicted_RNA 
+
+# Normalize the data
+pbmc <-NormalizeData(pbmc, assay = 'RNA', normalization.method = 'LogNormalize',
+scale.factor = median(pbmc$nCount_RNA)) 
+
+DefaultAssay(pbmc)
+
+DefaultAssay(pbmc) <- 'RNA'
+
+
+# Mono
+FeaturePlot(object = pbmc,features = c('CD14', 'LYZ', 'TREM1','MS4A7'),label = TRUE,
+            pt.size = 0.1, max.cutoff = 'q95')
+
+# B, NK cells
+FeaturePlot(object = pbmc,features = c('MS4A1', 'CD79A', 'NKG7','GNLY'),label = TRUE,
+            pt.size = 0.1, max.cutoff = 'q95')
+
+# T cells
+FeaturePlot(object = pbmc,features = c('CD4', 'CD8A', 'IL7R','CCR7'),label = TRUE,
+            pt.size = 0.1, max.cutoff = 'q95')
+saveRDS(pbmc, file = "pbmc.rds")
