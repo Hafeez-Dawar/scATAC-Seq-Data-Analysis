@@ -1,0 +1,75 @@
+#QC 
+
+#1. compute the nucleosome signal score per cell
+pbmc <- NucleosomeSignal(pbmc)
+
+
+#2. calculate the Transcriptional start site (TSS) Enrichment score for cell
+pbmc <- TSSEnrichment(pbmc, fast = FALSE)
+
+
+#3. TSS Enrichment score across few cells
+head(pbmc$TSS.enrichment)
+
+
+#4.Visualize peak_region_fragments
+VlnPlot(pbmc, features = "peak_region_fragments", pt.size = 0.1)
+
+
+#5.calculate and add the pct_reads_in_peaks
+pbmc$pct_reads_in_peaks <- pbmc$peak_region_fragments / pbmc$passed_filters*100 
+
+
+#6. Add a blacklist ratio to the seurat object (black region fragments / peak region fragments)
+pbmc$blacklist_ratio <- pbmc$blacklist_region_fragments / pbmc$peak_region_fragments
+ # check the blacklist ratio
+head(pbmc$blacklist_ratio)
+
+
+#7. create a group of TSS Enrichment threshold
+pbmc$high.tss <- ifelse(pbmc$TSS.enrichment > 2, 'high', 'Low')
+
+
+#8. visualize the TSS enrichment by high/low group
+TSSPlot(pbmc, group.by = 'high.tss') + NoLegend()
+
+
+#9. Group the cells based on nucleosome signal score
+pbmc$nucleosome_group <-ifelse(pbmc$nucleosome_signal > 4, 'NS > 4', 'NS < 4')
+
+
+#10. Create a violin plot
+VlnPlot(pbmc, features = c("nucleosome_signal", "TSS.enrichment", "peak_region_fragments",
+"pct_reads_in_peaks", "blacklist_ratio"), pt.size = 0.1, ncol = 5)
+
+
+#11. create a subset of seurat
+pbmc <- subset(x = pbmc, subset = peak_region_fragments > 3000 & peak_region_fragments < 20000
+& pct_reads_in_peaks > 15 & blacklist_ratio < 0.05 &nucleosome_signal < 4 & TSS.enrichment
+ > 2)
+
+
+#12. Normalize the peak count matrix using the RunTFIDF()
+pbmc <- RunTFIDF(pbmc)
+
+
+#13. Identifying the most informative peaks that differ between cells
+pbmc <- FindTopFeatures(pbmc, min.cutoff = 'q0')
+
+
+#14. Linear dimensional reduction via SVD (Singular value decomposition)
+pbmc <- RunSVD(pbmc)
+
+
+#15. create a correlation plot between LSI component and total sequencing depth
+DepthCor(pbmc)
+
+
+#16. Dimension reduction and clustering
+pbmc <- RunUMAP(object = pbmc, reduction = 'lsi', dims = 2:30)
+pbmc <- FindNeighbors(object = pbmc, reduction = 'lsi', dims = 2:30)
+pbmc <- FindClusters(object = pbmc, verbose = FALSE, algorithm = 3)
+DimPlot(object = pbmc, label = TRUE) + NoLegend() 
+
+# save the seurat object
+saveRDS(pbmc, file = "pbmc.rds")
